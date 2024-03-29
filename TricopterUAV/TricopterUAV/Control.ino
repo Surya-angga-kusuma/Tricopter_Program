@@ -11,34 +11,35 @@ void control()
 	else if (ControllerIRoll < maxController * -1){ ControllerIRoll = maxController * -1; }
 
 //    ControlRoll = GainProll * errorRoll + ControllerIRoll + GainDroll * (errorRoll - ControllerDRollLast);
-	ControlRoll = (GainProll * errorRoll) + ControllerIRoll + (GainDroll * gx);
-//  ControlRoll = 0;
+//	ControlRoll = (GainProll * errorRoll) + ControllerIRoll + (GainDroll * gx);
+ ControlRoll = 0;
   
 	if (ControlRoll > maxController){ ControlRoll = maxController; }
 	else if (ControlRoll < maxController * -1){ ControlRoll = maxController * -1; }
 	ControllerDRollLast = errorRoll;
 
 	// ========== pitch control ==========
-	errorPitch = gyro_pitch_input - pitch_input;
-	ControllerIPitch += GainIpitch * (errorPitch/1.321940560625);
+	errorPitch = pitch_deg - pitch_input;
+	ControllerIPitch += GainIpitch * (errorPitch);
 	if (ControllerIPitch > maxController){ ControllerIPitch = maxController; }
 	else if (ControllerIPitch < maxController * -1){ ControllerIPitch = maxController * -1; }
- 
+
+  ControlPitch = (GainPpitch * errorPitch) + ControllerIPitch + (GainDpitch*gy) ;
 //	ControlPitch = GainPpitch * (errorPitch/1.321940560625) + ControllerIPitch + GainDpitch * ((errorPitch - ControllerDPitchLast)/1.321940560625);
-  ControlPitch = 0;
+//  ControlPitch = 0;
  
 	if (ControlPitch > maxController){ ControlPitch = maxController; }
 	else if (ControlPitch < maxController * -1){ ControlPitch = maxController * -1; }
 	ControllerDPitchLast = errorPitch;
 
 	// ========== yaw control ==========
-	errorYaw = gyro_yaw_input - yaw_input;
+	errorYaw = heading_control - yaw_input;
 	ControllerIYaw += GainIyaw * (errorYaw*5.482456140625);
 	if (ControllerIYaw > maxController){ ControllerIYaw = maxController; }
 	else if (ControllerIYaw < maxController * -1){ ControllerIYaw = maxController * -1; }
  
 //	ControlYaw = GainPyaw * errorYaw + ControllerIYaw + GainDyaw * (errorYaw - ControllerDYawLast);
-    ControlYaw = 0;
+//    ControlYaw = 0;
  
 	if (ControlYaw > maxController){ ControlYaw = maxController; }
 	else if (ControlYaw < maxController * -1){ ControlYaw = maxController * -1; }
@@ -53,15 +54,14 @@ void control_update()
   if(ch5==0)
   {
     yawDegrees = headingDegrees ;
-    heading_control = 0;
-    throttle = 1000;
-    
-    ControllerIRoll = 0;
-    ControllerIPitch = 0;
-    ControllerIYaw = 0;
-    ControllerDRollLast = 0;
+    heading_control      = 0;
+    throttle             = 1000;
+    ControllerIRoll      = 0;
+    ControllerIPitch     = 0;
+    ControllerIYaw       = 0;
+    ControllerDRollLast  = 0;
     ControllerDPitchLast = 0;
-    ControllerDYawLast = 0;
+    ControllerDYawLast   = 0;
     
     servo    = servoAngleInit;
     motor1   = 1000;
@@ -72,7 +72,7 @@ void control_update()
   if(ch5==1)
   {
     heading_control = yawDegrees - headingDegrees;
-    throttle_input = throttle_channel;
+    throttle_input  = throttle_channel;
     
     if (throttle_input > 1700)
 		{
@@ -84,7 +84,8 @@ void control_update()
     motor1 = throttle_input - ControlRoll + (ControlPitch*2/3) ; //RIGHT
     motor2 = throttle_input + ControlRoll + (ControlPitch*2/3) ; //LEFT
     motor3 = throttle_input - (ControlPitch*4/3);                //REAR
-    servo = constrain(servoAngleInit + (ControlYaw*-1), (servoAngleInit-45), (servoAngleInit+45));
+    ControlYaw_Filter = (ControlYaw_Filter*0.7)+(ControlYaw*0.3);
+    servo  = constrain(servoAngleInit + (ControlYaw_Filter*-1), (servoAngleInit-29), (servoAngleInit+29));
 
 //    q1 = (-d)/(2*kt*(d2+d));
 //    q2 = (1)/(2*d1*kt);
